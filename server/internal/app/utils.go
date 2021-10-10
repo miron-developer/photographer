@@ -1,19 +1,19 @@
 package app
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
-	"io"
+	"log"
 	"math/rand"
-	"net/http"
-	"net/url"
-	"os/exec"
-	"regexp"
-	"strings"
+	"os"
+	"photographer/internal/api"
 	"time"
+	// "alber/pkg/api"
+)
 
-	"alber/pkg/api"
+const (
+	DBPort      = 8000
+	ApiPort     = 8010
+	AuthPort    = 8020
+	BillingPort = 8030
 )
 
 func RandomStringFromCharsetAndLength(charset string, length int) string {
@@ -25,15 +25,16 @@ func RandomStringFromCharsetAndLength(charset string, length int) string {
 	return string(b)
 }
 
-// write in log each request
-func logingReq(r *http.Request) string {
-	return fmt.Sprintf("%v %v: '%v'\n", r.RemoteAddr, r.Method, r.URL)
+func CreateLogged(logType string) *log.Logger {
+	wd, _ := os.Getwd()
+	logFile, _ := os.OpenFile(wd+"/logs/"+logType+"/log_"+time.Now().Format("2006-01-02")+".txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	return log.New(logFile, "\033[31m[ERROR]\033[0m\t", log.Ldate|log.Ltime|log.Lshortfile)
 }
 
 // DoBackup make backup every 30 min
 func (app *Application) DoBackup() error {
-	cmd := exec.Command("cp", `db/alber.db`, `db/alber_backup.db`)
-	return cmd.Run()
+	// cmd := exec.Command("cp", `db/alber.db`, `db/alber_backup.db`)
+	// return cmd.Run()
 }
 
 // CheckPerMin call SessionGC per minute that delete expired sessions and do db backup
@@ -54,13 +55,13 @@ func (app *Application) CheckPerMin() {
 		}
 		if app.CurrentMin%30 == 0 {
 			if e := app.DoBackup(); e == nil {
-				app.ILog.Println("backup created!")
+				app.Log.Println("backup created!")
 			} else {
-				app.ELog.Println(e)
+				app.Log.Println(e)
 			}
 		}
 		if e := api.SessionGC(); e != nil {
-			app.ELog.Println(e)
+			app.Log.Println(e)
 		}
 
 		// remove expired codes
@@ -74,51 +75,4 @@ func (app *Application) CheckPerMin() {
 			}
 		}()
 	}
-}
-
-type MOBIZONE_API_RESP struct {
-	Code    int         `json:"code"`
-	Data    interface{} `json:"data"`
-	Message string      `json:"message"`
-}
-
-// SendSMS make sending sms
-func (app *Application) SendSMS(phone, code, msg string) error {
-	HOST := "https://api.mobizon.kz/service"
-	SERVICE := "message"
-	METHOD := "sendsmsmessage"
-
-	params := url.Values{}
-	params.Set("recipient", code+phone)
-	params.Set("apiKey", app.Config.MOBIZON_API_KEY)
-	params.Set("text", msg)
-
-	// send post rq
-	resp, e := http.PostForm(strings.Join([]string{HOST, SERVICE, METHOD}, "/"), params)
-	if e != nil {
-		return errors.New("ошибка сервера: сервер отправки сообщений не отвечает")
-	}
-
-	// get response data
-	content, e := io.ReadAll(resp.Body)
-	if e != nil {
-		return errors.New("ошибка сервера: ошибка содержимого")
-	}
-
-	// convert data to struct
-	result := &MOBIZONE_API_RESP{}
-	if e := json.Unmarshal(content, result); e != nil {
-		return errors.New("ошибка сервера: парсинг")
-	}
-
-	// handle api errors
-	if result.Message != "" || result.Code == 1 {
-		return errors.New("не корректный телефон")
-	}
-	return nil
-}
-
-func getPhoneNumber(phone string) string {
-	rg := regexp.MustCompile(`[\d+]+`)
-	return strings.Join(rg.FindAllString(phone, -1), "")
 }

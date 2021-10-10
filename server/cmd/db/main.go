@@ -1,44 +1,55 @@
 package main
 
 import (
-	"crypto/tls"
+	"context"
 	"fmt"
-	"net/http"
-	"time"
+	"net"
 
-	"alber/pkg/app"
+	"photographer/internal/app"
+	"photographer/internal/orm"
+	"photographer/internal/protobuf/db"
+
+	"google.golang.org/grpc"
 )
 
+type dbServer struct {
+	db.UnimplementedDBServer
+}
+
+func newDbServer() *dbServer {
+	return &dbServer{}
+}
+
+func (s *dbServer) Create(ctx context.Context, p *db.SQLInsertParams) (*db.SQLResult, error) {
+	return &db.SQLResult{}, nil
+}
+
+func (s *dbServer) Update(ctx context.Context, p *db.SQLUpdateParams) (*db.SQLResult, error) {
+	return &db.SQLResult{}, nil
+}
+
+func (s *dbServer) Delete(ctx context.Context, p *db.SQLDeleteParams) (*db.SQLResult, error) {
+	return &db.SQLResult{}, nil
+}
+
+func (s *dbServer) Select(ctx context.Context, p *db.SQLSelectParams) (*db.SQLResult, error) {
+	return &db.SQLResult{}, nil
+}
+
 func main() {
-	app := app.InitProg()
-
-	app.ILog.Println("initialization completed!")
-
-	// check sessions expire per minute
-	go app.CheckPerMin()
-
-	// server
-	srv := http.Server{
-		Addr:         ":" + app.Config.PORT,
-		ErrorLog:     app.ELog,
-		Handler:      app.SetRoutes(),
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		IdleTimeout:  120 * time.Second,
-		TLSConfig: &tls.Config{
-			PreferServerCipherSuites: true,
-			CurvePreferences:         []tls.CurveID{tls.X25519, tls.CurveP256},
-			CipherSuites: []uint16{tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384, tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305, tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305},
-		},
+	// initialize
+	log := app.CreateLogged("db")
+	if e := orm.InitDB(log); e != nil {
+		log.Fatalln("init db error: ", e)
 	}
 
-	fmt.Printf("server listening on port %v\n", app.Config.PORT)
-	app.ILog.Printf("server listening on port %v\n", app.Config.PORT)
+	// listen db service
+	lis, e := net.Listen("tcp", fmt.Sprintf("localhost:%d", app.DBPort))
+	if e != nil {
+		log.Fatalf("failed to listen: %v\n", e)
+	}
 
-	// HTTP
-	// app.ELog.Fatal(srv.ListenAndServe())
-
-	// HTTPS
-	app.ELog.Fatal(srv.ListenAndServeTLS("./tls/al-ber_kz.crt", "./tls/11029176.key"))
+	srv := grpc.NewServer(nil)
+	db.RegisterDBServer(srv, newDbServer())
+	srv.Serve(lis)
 }

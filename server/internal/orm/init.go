@@ -5,55 +5,55 @@ import (
 	"database/sql"
 	"log"
 
-	// sqlite driver
-	_ "github.com/mattn/go-sqlite3"
-
-	// db migration
-	"github.com/golang-migrate/migrate"
-	"github.com/golang-migrate/migrate/database/sqlite3"
-	_ "github.com/golang-migrate/migrate/source/file"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 // ConnToDB is conn to db
 var ConnToDB *sql.DB
 
-func execMigrations() error {
-	driver, e := sqlite3.WithInstance(ConnToDB, &sqlite3.Config{})
-	if e != nil {
-		return e
-	}
+// func execMigrations() error {
+// 	driver, e := postgres.WithInstance(ConnToDB, &postgres.Config{})
+// 	if e != nil {
+// 		return e
+// 	}
 
-	m, e := migrate.NewWithDatabaseInstance("file://db/migrations", "sqlite3", driver)
-	if e != nil {
-		return e
-	}
+// 	m, e := migrate.NewWithDatabaseInstance("file://db/migrations", "postgres", driver)
+// 	if e != nil {
+// 		return e
+// 	}
 
-	if e = m.Up(); e != nil && e != migrate.ErrNoChange {
-		return e
-	}
+// 	if e = m.Up(); e != nil && e != migrate.ErrNoChange {
+// 		return e
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 // InitDB init db, settings and tables
-func InitDB(iLog *log.Logger) error {
-	// creating db file or getting access to it
-	iLog.Println("accessing database file")
-	ConnToDB, _ = sql.Open("sqlite3", "file:db/alber.db?_auth&_auth_user=alber&_auth_pass=zhibek1234&_auth_crypt=sha1")
-	iLog.Println("access completed")
+func InitDB(log *log.Logger) error {
+	// establish connection to db
+	log.Println("accessing database")
+	dsn := "host=localhost user=gorm password=gorm dbname=photographer port=5432 sslmode=disable TimeZone=Asia/Shanghai"
+	db, e := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if e != nil {
+		return e
+	}
+	ConnToDB = db
+	log.Println("accessed")
 
 	// make some sql settings
-	iLog.Println("set up database configs")
+	log.Println("set up database configs")
 	if _, e := ConnToDB.ExecContext(context.Background(), "PRAGMA foreign_keys = ON;PRAGMA case_sensitive_like = true;PRAGMA auto_vacuum = FULL;"); e != nil {
 		return e
 	}
-	iLog.Println("database configured")
+	log.Println("database configured")
 
 	// do migrations
-	iLog.Println("making migrations")
-	if e := execMigrations(); e != nil {
-		return e
-	}
-	iLog.Println("migrations completed")
+	log.Println("making migrations")
+	// if e := execMigrations(); e != nil {
+	// return e
+	// }
+	log.Println("migrations completed")
 	return nil
 }

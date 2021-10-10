@@ -30,8 +30,7 @@ type AppConfig struct {
 // Application - app config and items
 type Application struct {
 	m                   sync.Mutex
-	ELog                *log.Logger
-	ILog                *log.Logger
+	Log                 *log.Logger
 	CurrentRequestCount int
 	CurrentMin          int // how many minuts pass after start/day
 	UsersCode           map[string]*Code
@@ -67,22 +66,21 @@ func InitProg() *Application {
 	wd, _ := os.Getwd()
 	logFile, _ := os.OpenFile(wd+"/logs/log_"+time.Now().Format("2006-01-02")+".txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 
-	eLog := log.New(logFile, "\033[31m[ERROR]\033[0m\t", log.Ldate|log.Ltime|log.Lshortfile)
-	iLog := log.New(logFile, "\033[34m[INFO]\033[0m\t", log.Ldate|log.Ltime|log.Lshortfile)
-	iLog.Println("loggers is done!")
+	log := log.New(logFile, "\033[31m[ERROR]\033[0m\t", log.Ldate|log.Ltime|log.Lshortfile)
+	// iLog := log.New(logFile, "\033[34m[INFO]\033[0m\t", log.Ldate|log.Ltime|log.Lshortfile)
+	log.Println("loggers is done!")
 
-	iLog.Println("creating/configuring database")
-	checkFatal(eLog, orm.InitDB(iLog))
-	iLog.Println("database completed!")
+	log.Println("creating/configuring database")
+	checkFatal(log, orm.InitDB(log))
+	log.Println("database completed!")
 
-	iLog.Println("configuring app")
+	log.Println("configuring app")
 	config, e := GetConfigs()
-	checkFatal(eLog, e)
-	iLog.Println("configuring done")
+	checkFatal(log, e)
+	log.Println("configuring done")
 
 	return &Application{
-		ELog:                eLog,
-		ILog:                iLog,
+		Log:                 log,
 		CurrentRequestCount: 0,
 		CurrentMin:          0,
 		UsersCode:           map[string]*Code{},

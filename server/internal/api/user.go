@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"alber/pkg/orm"
+	"photographer/pkg/orm"
 
 	"golang.org/x/crypto/bcrypt"
 )

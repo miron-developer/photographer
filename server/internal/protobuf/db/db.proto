@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+option go_package = "photographer/internal/protobuf/db";
+package db;
+
+import "google/protobuf/any.proto";
+
+service DB {
+    rpc Create (SQLInsertParams) returns (SQLResult);
+    rpc Update (SQLUpdateParams) returns (SQLResult);
+    rpc Delete (SQLDeleteParams) returns (SQLResult);
+    rpc Select (SQLSelectParams) returns (SQLResult);
+}
+
+message SQLOption {
+	string where = 1;
+	string order = 2; 
+	string limit = 3; 
+	repeated google.protobuf.Any args  = 4;
+}
+
+message SQLJoin {
+    enum JoinType {
+        IN = 0;
+        LO = 1;
+        RO = 2;
+        OUT = 3;
+    }
+	JoinType joinType = 1;
+	string joinTable = 2;
+	string intersection = 3;
+	repeated google.protobuf.Any args = 4;
+}
+
+message SQLResult {
+    enum Result {
+        CREATE = 0;
+        UPDATE = 1;
+        DELETE = 2;
+        SELECT = 3;
+    }
+
+    Result result = 1;
+    repeated google.protobuf.Any data = 2;
+}
+
+message SQLInsertParams {
+    string table = 1;
+	string datas = 2;  
+	repeated google.protobuf.Any values = 3;
+}
+
+message SQLUpdateParams {
+    string table = 1;
+	map<string, string> couples = 2;
+	SQLOption options = 3;
+}
+
+message SQLDeleteParams {
+    string table = 1;   
+	SQLOption options = 2; 
+}
+
+message SQLSelectParams {
+    string what = 1;    
+	string table = 2;
+	SQLOption options = 3; 
+	repeated SQLJoin joins = 4;
+	repeated google.protobuf.Any args = 5;    
+}
