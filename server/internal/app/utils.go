@@ -6,7 +6,7 @@ import (
 	"os"
 	"photographer/internal/api"
 	"time"
-	// "alber/pkg/api"
+	// "photographer/pkg/api"
 )
 
 const (
@@ -33,8 +33,9 @@ func CreateLogged(logType string) *log.Logger {
 
 // DoBackup make backup every 30 min
 func (app *Application) DoBackup() error {
-	// cmd := exec.Command("cp", `db/alber.db`, `db/alber_backup.db`)
+	// cmd := exec.Command("cp", `db/photographer.db`, `db/alber_backup.db`)
 	// return cmd.Run()
+	return nil
 }
 
 // CheckPerMin call SessionGC per minute that delete expired sessions and do db backup

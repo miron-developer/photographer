@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"photographer/pkg/orm"
+	"photographer/internal/orm"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -103,7 +103,7 @@ func User(w http.ResponseWriter, r *http.Request) (interface{}, error) {
 		querys,
 		[]string{},
 		as,
-		orm.User{},
+		orm.Customer{},
 	)
 	if e != nil {
 		return nil, e
@@ -129,7 +129,7 @@ func Users(w http.ResponseWriter, r *http.Request) (interface{}, error) {
 			Options: orm.DoSQLOption("", "", "?,?", first, step),
 		},
 		nil,
-		orm.User{},
+		orm.Customer{},
 	), nil
 }
 
@@ -150,8 +150,8 @@ func ChangeProfile(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	u := &orm.User{
-		ID: userID, Nickname: nickname, PhoneNumber: phone,
+	u := &orm.Customer{
+		ID: uint(userID), FirstName: nickname,
 	}
 	if pass != "" {
 		if e := CheckPassword(false, pass, ""); e != nil {

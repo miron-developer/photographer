@@ -39,7 +39,7 @@ func InitDB(log *log.Logger) error {
 	if e != nil {
 		return e
 	}
-	ConnToDB = db
+	ConnToDB, _ = db.DB()
 	log.Println("accessed")
 
 	// make some sql settings

@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"alber/pkg/orm"
+	"photographer/internal/orm"
 )
 
 // Code struct for app

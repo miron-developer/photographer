@@ -7,8 +7,7 @@ import (
 	"strconv"
 	"text/template"
 
-	"alber/pkg/api"
-	"alber/pkg/orm"
+	"photographer/internal/api"
 )
 
 // SecureHeaderMiddleware set secure header option
@@ -29,11 +28,11 @@ func (app *Application) AccessLogMiddleware(next http.Handler) http.Handler {
 		if app.CurrentRequestCount < max {
 			app.CurrentRequestCount++
 			// loging
-			// app.ILog.Printf(logingReq(r))
+			// app.Log.Printf(logingReq(r))
 			next.ServeHTTP(w, r)
 		} else {
 			http.Error(w, "service is overloaded", 529)
-			app.ELog.Println(errors.New("rate < curl"))
+			app.Log.Println(errors.New("rate < curl"))
 		}
 	})
 }
@@ -45,7 +44,7 @@ func (app *Application) HIndex(w http.ResponseWriter, r *http.Request) {
 		t, e := template.ParseFiles(wd + "/website/index.html")
 		if e != nil {
 			http.Error(w, "can't load this page", 500)
-			app.ELog.Println(e)
+			app.Log.Println(e)
 			return
 		}
 		t.Execute(w, nil)
@@ -109,31 +108,6 @@ func (app *Application) HUsers(w http.ResponseWriter, r *http.Request) {
 	api.HApi(w, r, api.Users)
 }
 
-// HParsels for handle '/api/parsels'
-func (app *Application) HParsels(w http.ResponseWriter, r *http.Request) {
-	api.HApi(w, r, api.Parsels)
-}
-
-// HTravelers for handle '/api/travelers'
-func (app *Application) HTravelers(w http.ResponseWriter, r *http.Request) {
-	api.HApi(w, r, api.Travelers)
-}
-
-// HTopTypes for handle '/api/toptypes'
-func (app *Application) HTopTypes(w http.ResponseWriter, r *http.Request) {
-	api.HApi(w, r, api.TopTypes)
-}
-
-// HTravelTypes for handle '/api/travelTypes'
-func (app *Application) HTravelTypes(w http.ResponseWriter, r *http.Request) {
-	api.HApi(w, r, api.TravelTypes)
-}
-
-// HCountryCodes for handle '/api/countryCodes'
-func (app *Application) HCountryCodes(w http.ResponseWriter, r *http.Request) {
-	api.HApi(w, r, api.CountryCodes)
-}
-
 // HSearch for handle '/api/search'
 func (app *Application) HSearch(w http.ResponseWriter, r *http.Request) {
 	api.HApi(w, r, api.Search)
@@ -163,42 +137,6 @@ func (app *Application) HCheckUserLogged(w http.ResponseWriter, r *http.Request)
 		}
 
 		data.Data = map[string]int{"id": userID}
-		api.DoJS(w, data)
-	}
-}
-
-// HPreSignUpSMS for handle '/sign/sms/s'
-func (app *Application) HPreSignUpSMS(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		data := api.API_RESPONSE{
-			Err:  "ok",
-			Data: "",
-			Code: 200,
-		}
-
-		phone := getPhoneNumber(r.PostFormValue("phone"))
-		if e := api.TestPhone(phone, false); e != nil {
-			api.SendErrorJSON(w, data, e.Error())
-			return
-		}
-		code := RandomStringFromCharsetAndLength("0123456789", 6)
-		countryCode := r.PostFormValue("countryCode")
-		scheme := "http"
-		if r.TLS != nil {
-			scheme += "s"
-		}
-		msg := scheme + "://" + r.Host + "/sign. Ал-Бер. Код: " + code
-
-		// send SMS
-		if e := app.SendSMS(phone, countryCode, msg); e != nil {
-			api.SendErrorJSON(w, data, e.Error())
-			return
-		}
-
-		app.m.Lock()
-		app.UsersCode[code] = &Code{Value: countryCode + phone, ExpireMin: app.CurrentMin + 60*1}
-		app.m.Unlock()
-
 		api.DoJS(w, data)
 	}
 }
@@ -243,43 +181,6 @@ func (app *Application) HSignIn(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		data.Data = map[string]int{"id": ID}
-		api.DoJS(w, data)
-	}
-}
-
-// HSaveNewPassword for handle '/sign/sms/ch'
-func (app *Application) HPreChangePasswordSMS(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		data := api.API_RESPONSE{
-			Err:  "ok",
-			Data: "",
-			Code: 200,
-		}
-
-		phone := getPhoneNumber(r.PostFormValue("phone"))
-		if e := api.TestPhone(phone, false); e != nil {
-			api.SendErrorJSON(w, data, e.Error())
-			return
-		}
-
-		code := RandomStringFromCharsetAndLength("0123456789", 6)
-		countryCode := r.PostFormValue("countryCode")
-		scheme := "http"
-		if r.TLS != nil {
-			scheme += "s"
-		}
-		msg := scheme + "://" + r.Host + "/sign. Ал-Бер. Код: " + code
-
-		// send SMS
-		if e := app.SendSMS(phone, countryCode, msg); e != nil {
-			api.SendErrorJSON(w, data, e.Error())
-			return
-		}
-
-		app.m.Lock()
-		app.UsersCode[code] = &Code{Value: countryCode + phone, ExpireMin: app.CurrentMin + 60*1}
-		app.m.Unlock()
-
 		api.DoJS(w, data)
 	}
 }
@@ -331,68 +232,6 @@ func (app *Application) HLogout(w http.ResponseWriter, r *http.Request) {
 
 // ------------------------------------------- Change ------------------------------------------
 
-// HConfirmChangeProfile save user settings
-func (app *Application) HPreChangeProfileSMS(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		data := api.API_RESPONSE{
-			Err:  "ok",
-			Data: "",
-			Code: 200,
-		}
-
-		userID := api.GetUserIDfromReq(w, r)
-		if userID == -1 {
-			api.SendErrorJSON(w, data, "не зарегистрированы в сети")
-			return
-		}
-
-		phoneDB, e := orm.GetOneFrom(orm.SQLSelectParams{
-			Table:   "Users",
-			What:    "phoneNumber",
-			Options: orm.DoSQLOption("id=?", "", "", userID),
-		})
-		if e != nil {
-			api.SendErrorJSON(w, data, "вас не существует в базе. вы кто такой?)")
-			return
-		}
-
-		phone, nickname := getPhoneNumber(r.PostFormValue("phone")), r.PostFormValue("phone")
-		if e := api.TestPhone(phone, true); e != nil {
-			api.SendErrorJSON(w, data, e.Error())
-			return
-		}
-
-		if countryCode := r.PostFormValue("countryCode"); phone != "" {
-			phone = countryCode + phone
-			if e := api.CheckPhoneAndNick(false, phone, nickname); e != nil {
-				api.SendErrorJSON(w, data, e.Error())
-				return
-			}
-		}
-		data.Data = map[string]string{"login": phoneDB[0].(string), "newPhone": phone}
-
-		code := RandomStringFromCharsetAndLength("0123456789", 6)
-		cd := &Code{Value: phoneDB[0].(string), ExpireMin: app.CurrentMin + 60*1}
-		scheme := "http"
-		if r.TLS != nil {
-			scheme += "s"
-		}
-		msg := scheme + "://" + r.Host + "/sign. Ал-Бер. Код: " + code
-
-		app.m.Lock()
-		app.UsersCode[code] = cd
-		app.m.Unlock()
-
-		// here sending sms to abonent
-		if e := app.SendSMS(phoneDB[0].(string), "", msg); e != nil {
-			api.SendErrorJSON(w, data, e.Error())
-			return
-		}
-
-		api.DoJS(w, data)
-	}
-}
-
 // HChangeProfile user data
 func (app *Application) HChangeProfile(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
@@ -421,128 +260,9 @@ func (app *Application) HChangeProfile(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HChangeParsel parsel change data
-func (app *Application) HChangeParsel(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		data := api.API_RESPONSE{
-			Err:  "ok",
-			Data: "",
-			Code: 200,
-		}
-
-		if e := api.ChangeParsel(w, r); e != nil {
-			api.SendErrorJSON(w, data, e.Error())
-			return
-		}
-		api.DoJS(w, data)
-	}
-}
-
-// HChangeTravel travel change data
-func (app *Application) HChangeTravel(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		data := api.API_RESPONSE{
-			Err:  "ok",
-			Data: "",
-			Code: 200,
-		}
-
-		if e := api.ChangeTravel(w, r); e != nil {
-			api.SendErrorJSON(w, data, e.Error())
-			return
-		}
-		api.DoJS(w, data)
-	}
-}
-
-// here will be pay confirm
-
-// HChangeTop travel or parsel change top
-func (app *Application) HChangeTop(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		data := api.API_RESPONSE{
-			Err:  "ok",
-			Data: "",
-			Code: 200,
-		}
-
-		// check payed code
-		_, ok := app.UsersCode[r.PostFormValue("code")]
-		if !ok {
-			api.SendErrorJSON(w, data, "not payed yet")
-			return
-		}
-
-		if e := api.ChangeTop(w, r); e != nil {
-			api.SendErrorJSON(w, data, e.Error())
-			return
-		}
-
-		// delete unnecessary code
-		app.m.Lock()
-		delete(app.UsersCode, r.PostFormValue("code"))
-		app.m.Unlock()
-
-		api.DoJS(w, data)
-	}
-}
-
-// HItemUp travel or parsel up
-func (app *Application) HItemUp(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		data := api.API_RESPONSE{
-			Err:  "ok",
-			Data: "",
-			Code: 200,
-		}
-
-		if e := api.ItemUp(w, r); e != nil {
-			api.SendErrorJSON(w, data, e.Error())
-			return
-		}
-
-		// delete unnecessary code
-		app.m.Lock()
-		delete(app.UsersCode, r.PostFormValue("code"))
-		app.m.Unlock()
-
-		api.DoJS(w, data)
-	}
-}
-
 // ------------------------------------------- Save ------------------------------------------
 
-// HSaveParsel create parsel
-func (app *Application) HSaveParsel(w http.ResponseWriter, r *http.Request) {
-	api.HApi(w, r, api.CreateParsel)
-}
-
-// HSaveTravel create parsel
-func (app *Application) HSaveTravel(w http.ResponseWriter, r *http.Request) {
-	api.HApi(w, r, api.CreateTravel)
-}
-
-// HSaveImage save one image
-func (app *Application) HSaveImage(w http.ResponseWriter, r *http.Request) {
-	link, name, e := uploadFile("file", r)
-	if e != nil {
-		return
-	}
-	r.PostForm.Set("link", link)
-	r.PostForm.Set("filename", name)
-	api.HApi(w, r, api.CreateImage)
-}
-
 // ------------------------------------------- Remove ----------------------------------------
-// HRemoveParsel create parsel
-func (app *Application) HRemoveParsel(w http.ResponseWriter, r *http.Request) {
-	api.HApi(w, r, api.RemoveParsel)
-}
-
-// HRemoveTravel create parsel
-func (app *Application) HRemoveTravel(w http.ResponseWriter, r *http.Request) {
-	api.HApi(w, r, api.RemoveTraveler)
-}
 
 // HRemoveImage save one image
 func (app *Application) HRemoveImage(w http.ResponseWriter, r *http.Request) {

@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"alber/pkg/api"
-	"alber/pkg/orm"
+	"photographer/internal/api"
+	"photographer/internal/orm"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -46,8 +46,8 @@ func (app *Application) SignUp(w http.ResponseWriter, r *http.Request) (map[stri
 		return nil, errors.New("ошибка сервера: пароль")
 	}
 
-	user := &orm.User{
-		Nickname: nickname, PhoneNumber: validPhone.Value.(string), Password: string(hashPass),
+	user := &orm.Customer{
+		FirstName: nickname, Password: string(hashPass),
 	}
 	userID, e := user.Create()
 	if e != nil {
@@ -66,24 +66,21 @@ func (app *Application) SignUp(w http.ResponseWriter, r *http.Request) (map[stri
 
 // SignIn check password and login from db and request + oauth2
 func (app *Application) SignIn(w http.ResponseWriter, r *http.Request) (int, error) {
-	phone := getPhoneNumber(r.PostFormValue("phone"))
 	pass := r.PostFormValue("password")
+	login := r.PostFormValue("login")
 
 	// checkings
-	if e := api.TestPhone(phone, false); e != nil {
+	if e := api.CheckPhoneAndNick(true, login, login); e != nil {
 		return -1, e
 	}
-	if e := api.CheckPhoneAndNick(true, phone, phone); e != nil {
-		return -1, e
-	}
-	if e := api.CheckPassword(true, pass, phone); e != nil {
+	if e := api.CheckPassword(true, pass, login); e != nil {
 		return -1, e
 	}
 
 	res, e := orm.GetOneFrom(orm.SQLSelectParams{
 		What:    "id",
 		Table:   "Users",
-		Options: orm.DoSQLOption("phoneNumber = ?", "", "", phone),
+		Options: orm.DoSQLOption("email = ?", "", "", login),
 		Joins:   nil,
 	})
 	if e != nil {
@@ -138,6 +135,6 @@ func (app *Application) ResetPassword(w http.ResponseWriter, r *http.Request) er
 		return errors.New("ошибка сервера: новый пароль не создан")
 	}
 
-	user := &orm.User{ID: orm.FromINT64ToINT(res[0]), Password: string(password)}
+	user := &orm.Customer{ID: res[0].(uint), Password: string(password)}
 	return user.Change()
 }

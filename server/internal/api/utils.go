@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"alber/pkg/orm"
+	"photographer/internal/orm"
 )
 
 type API_RESPONSE struct {
@@ -110,8 +110,8 @@ func GetUserIDfromReq(w http.ResponseWriter, r *http.Request) int {
 	}
 
 	// update cooks & sess
-	ses := &orm.Session{ID: sesID, Expire: TimeExpire(sessionExpire)}
-	ses.Change()
+	// ses := &orm.Session{ID: sesID, Expire: TimeExpire(sessionExpire)}
+	// ses.Change()
 	SetCookie(w, sesID, int(sessionExpire/timeSecond))
 	return orm.FromINT64ToINT(userID[0])
 }

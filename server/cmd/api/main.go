@@ -6,13 +6,13 @@ import (
 	"net/http"
 	"time"
 
-	"alber/pkg/app"
+	"photographer/internal/app"
 )
 
 func main() {
 	app := app.InitProg()
 
-	app.ILog.Println("initialization completed!")
+	app.Log.Println("initialization completed!")
 
 	// check sessions expire per minute
 	go app.CheckPerMin()
@@ -20,7 +20,7 @@ func main() {
 	// server
 	srv := http.Server{
 		Addr:         ":" + app.Config.PORT,
-		ErrorLog:     app.ELog,
+		ErrorLog:     app.Log,
 		Handler:      app.SetRoutes(),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
@@ -34,11 +34,11 @@ func main() {
 	}
 
 	fmt.Printf("server listening on port %v\n", app.Config.PORT)
-	app.ILog.Printf("server listening on port %v\n", app.Config.PORT)
+	app.Log.Printf("server listening on port %v\n", app.Config.PORT)
 
 	// HTTP
 	// app.ELog.Fatal(srv.ListenAndServe())
 
 	// HTTPS
-	app.ELog.Fatal(srv.ListenAndServeTLS("./tls/al-ber_kz.crt", "./tls/11029176.key"))
+	app.Log.Fatal(srv.ListenAndServeTLS("./tls/al-ber_kz.crt", "./tls/11029176.key"))
 }

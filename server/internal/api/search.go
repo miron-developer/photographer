@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"alber/pkg/orm"
+	"photographer/internal/orm"
 )
 
 func doSearch(r *http.Request, q orm.SQLSelectParams, sampleStruct interface{}, addQs []orm.SQLSelectParams, joinAs, qAs []string) (interface{}, error) {
@@ -64,6 +64,6 @@ func Search(w http.ResponseWriter, r *http.Request) (interface{}, error) {
 	if r.Method == "POST" {
 		return nil, errors.New("wrong method")
 	}
-
-	return SearchCity(r)
+	return nil, nil
+	// return SearchCity(r)
 }

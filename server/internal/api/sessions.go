@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"time"
 
-	"alber/pkg/orm"
+	"photographer/internal/orm"
 
 	uuid "github.com/satori/go.uuid"
 )
@@ -42,7 +42,7 @@ func SessionStart(w http.ResponseWriter, r *http.Request, userID int) error {
 	cookie, e := r.Cookie(cookieName)
 	sidFromCookie := ""
 	sidFromDB := ""
-	isToCreate := false
+	// isToCreate := false
 
 	// get all sids
 	if e == nil && cookie.Value != "" {
@@ -62,7 +62,7 @@ func SessionStart(w http.ResponseWriter, r *http.Request, userID int) error {
 	// select one sid
 	sid := sidFromDB
 	if sid == "" {
-		isToCreate = true
+		// isToCreate = true
 		sid = sidFromCookie
 	}
 	if sid == "" {
@@ -70,12 +70,12 @@ func SessionStart(w http.ResponseWriter, r *http.Request, userID int) error {
 	}
 
 	// create or change session
-	s := &orm.Session{ID: sid, Expire: TimeExpire(sessionExpire), UserID: userID}
-	if isToCreate {
-		e = s.Create()
-	} else {
-		e = s.Change()
-	}
+	// s := &orm.Session{ID: sid, Expire: TimeExpire(sessionExpire), CustID: uint(userID)}
+	// if isToCreate {
+	// 	e = s.Create()
+	// } else {
+	// 	e = s.Change()
+	// }
 	if e != nil {
 		return errors.New("session error")
 	}
