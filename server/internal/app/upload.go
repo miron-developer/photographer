@@ -37,7 +37,7 @@ func uploadFile(fileFormKey string, r *http.Request) (string, string, error) {
 		return "", "", errors.New("dont support this type of photo")
 	}
 
-	fileName := RandomStringFromCharsetAndLength("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 8)
+	fileName := RndStr("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 8)
 	ext := strings.Split(fh.Filename, ".")
 	link := "/assets/img/" + fileName + "." + ext[len(ext)-1]
 

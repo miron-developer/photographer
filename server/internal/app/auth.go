@@ -34,7 +34,7 @@ func (app *Application) SignUp(w http.ResponseWriter, r *http.Request) (map[stri
 
 	// generating password
 	for {
-		tempPass := RandomStringFromCharsetAndLength("0123456789ABCDEFJGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", 12)
+		tempPass := RndStr("0123456789ABCDEFJGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", 12)
 		if e := api.CheckPassword(false, tempPass, ""); e == nil {
 			pass = tempPass
 			break

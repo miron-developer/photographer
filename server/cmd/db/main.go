@@ -6,40 +6,40 @@ import (
 	"net"
 
 	"photographer/internal/app"
-	"photographer/internal/orm"
-	"photographer/internal/protobuf/db"
+	"photographer/internal/db"
+	pdb "photographer/internal/protobuf/db"
 
 	"google.golang.org/grpc"
 )
 
 type dbServer struct {
-	db.UnimplementedDBServer
+	pdb.UnimplementedDBServer
 }
 
 func newDbServer() *dbServer {
 	return &dbServer{}
 }
 
-func (s *dbServer) Create(ctx context.Context, p *db.SQLInsertParams) (*db.SQLResult, error) {
-	return &db.SQLResult{}, nil
+func (s *dbServer) Create(ctx context.Context, p *pdb.SQLInsertParams) (*pdb.SQLResult, error) {
+	return &pdb.SQLResult{}, nil
 }
 
-func (s *dbServer) Update(ctx context.Context, p *db.SQLUpdateParams) (*db.SQLResult, error) {
-	return &db.SQLResult{}, nil
+func (s *dbServer) Update(ctx context.Context, p *pdb.SQLUpdateParams) (*pdb.SQLResult, error) {
+	return &pdb.SQLResult{}, nil
 }
 
-func (s *dbServer) Delete(ctx context.Context, p *db.SQLDeleteParams) (*db.SQLResult, error) {
-	return &db.SQLResult{}, nil
+func (s *dbServer) Delete(ctx context.Context, p *pdb.SQLDeleteParams) (*pdb.SQLResult, error) {
+	return &pdb.SQLResult{}, nil
 }
 
-func (s *dbServer) Select(ctx context.Context, p *db.SQLSelectParams) (*db.SQLResult, error) {
-	return &db.SQLResult{}, nil
+func (s *dbServer) Select(ctx context.Context, p *pdb.SQLSelectParams) (*pdb.SQLResult, error) {
+	return &pdb.SQLResult{}, nil
 }
 
 func main() {
 	// initialize
-	log := app.CreateLogged("db")
-	if e := orm.InitDB(log); e != nil {
+	log := app.CreateLogger("db", "", "")
+	if e := db.InitDB(log); e != nil {
 		log.Fatalln("init db error: ", e)
 	}
 
@@ -50,6 +50,6 @@ func main() {
 	}
 
 	srv := grpc.NewServer(nil)
-	db.RegisterDBServer(srv, newDbServer())
+	pdb.RegisterDBServer(srv, newDbServer())
 	srv.Serve(lis)
 }

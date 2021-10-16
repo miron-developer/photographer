@@ -37,7 +37,14 @@ type Application struct {
 	Config              *AppConfig
 }
 
-func checkFatal(eLogger *log.Logger, e error) {
+const (
+	DBPort      = 8000
+	ApiPort     = 8010
+	AuthPort    = 8020
+	BillingPort = 8030
+)
+
+func CheckFatal(eLogger *log.Logger, e error) {
 	if e != nil {
 		eLogger.Fatal(e)
 	}
@@ -71,12 +78,12 @@ func InitProg() *Application {
 	log.Println("loggers is done!")
 
 	log.Println("creating/configuring database")
-	checkFatal(log, orm.InitDB(log))
+	CheckFatal(log, orm.InitDB(log))
 	log.Println("database completed!")
 
 	log.Println("configuring app")
 	config, e := GetConfigs()
-	checkFatal(log, e)
+	CheckFatal(log, e)
 	log.Println("configuring done")
 
 	return &Application{
