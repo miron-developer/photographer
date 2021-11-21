@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"time"
 
-	"photographer/internal/orm"
+	// "photographer/internal/orm"
 
 	uuid "github.com/satori/go.uuid"
 )
@@ -49,15 +49,15 @@ func SessionStart(w http.ResponseWriter, r *http.Request, userID int) error {
 		sidFromCookie, _ = url.QueryUnescape(cookie.Value)
 	}
 
-	res, e := orm.GetOneFrom(orm.SQLSelectParams{
-		Table:   "Sessions",
-		What:    "id",
-		Options: orm.DoSQLOption("userID = ?", "", "", userID),
-		Joins:   nil,
-	})
-	if res != nil && e == nil {
-		sidFromDB = res[0].(string)
-	}
+	// res, e := orm.GetOneFrom(orm.SQLSelectParams{
+	// 	Table:   "Sessions",
+	// 	What:    "id",
+	// 	Options: orm.DoSQLOption("userID = ?", "", "", userID),
+	// 	Joins:   nil,
+	// })
+	// if res != nil && e == nil {
+	// 	sidFromDB = res[0].(string)
+	// }
 
 	// select one sid
 	sid := sidFromDB
@@ -86,8 +86,9 @@ func SessionStart(w http.ResponseWriter, r *http.Request, userID int) error {
 
 // SessionGC delete expired session
 func SessionGC() error {
-	return orm.DeleteByParams(orm.SQLDeleteParams{
-		Table:   "Sessions",
-		Options: orm.DoSQLOption("datetime(expireDatetime) < datetime('"+TimeExpire(time.Nanosecond)+"')", "", ""),
-	})
+	// return orm.DeleteByParams(orm.SQLDeleteParams{
+	// 	Table:   "Sessions",
+	// 	Options: orm.DoSQLOption("datetime(expireDatetime) < datetime('"+TimeExpire(time.Nanosecond)+"')", "", ""),
+	// })
+	return nil
 }

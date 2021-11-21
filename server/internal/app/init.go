@@ -1,17 +1,11 @@
-/*
-	Initialize app
-*/
-
 package app
 
 import (
 	"log"
 	"os"
-	"strings"
 	"sync"
 	"time"
-
-	"photographer/internal/orm"
+	// "photographer/internal/orm"
 )
 
 // Code struct for app
@@ -50,24 +44,6 @@ func CheckFatal(eLogger *log.Logger, e error) {
 	}
 }
 
-func GetConfigs() (*AppConfig, error) {
-	content, e := os.ReadFile(".env")
-	if e != nil {
-		return nil, e
-	}
-
-	conf := &AppConfig{}
-	confMap := map[string]interface{}{}
-	rows := strings.Split(string(content), "\n")
-	for _, row := range rows {
-		arr := strings.Split(row, "=")
-		confMap[arr[0]] = arr[1]
-	}
-
-	e = orm.FillStructFromMap(conf, confMap)
-	return conf, e
-}
-
 // InitProg initialise
 func InitProg() *Application {
 	wd, _ := os.Getwd()
@@ -78,12 +54,12 @@ func InitProg() *Application {
 	log.Println("loggers is done!")
 
 	log.Println("creating/configuring database")
-	CheckFatal(log, orm.InitDB(log))
+	// CheckFatal(log, orm.InitDB(log))
 	log.Println("database completed!")
 
 	log.Println("configuring app")
-	config, e := GetConfigs()
-	CheckFatal(log, e)
+	// config, e := GetConfigs()
+	// CheckFatal(log, e)
 	log.Println("configuring done")
 
 	return &Application{
@@ -91,6 +67,6 @@ func InitProg() *Application {
 		CurrentRequestCount: 0,
 		CurrentMin:          0,
 		UsersCode:           map[string]*Code{},
-		Config:              config,
+		// Config:              config,
 	}
 }

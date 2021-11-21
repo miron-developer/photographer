@@ -1,14 +1,30 @@
 package app
 
 import (
-	"log"
+	"fmt"
 	"math/rand"
 	"os"
 	"os/exec"
-	"photographer/internal/api"
+	"strings"
 	"sync"
 	"time"
+
+	"photographer/internal/api"
+
+	"github.com/sirupsen/logrus"
 )
+
+var (
+	NUMBER_CHARSET     = "0123456789"
+	LOWER_CASE_CHARSET = "abcdefghijklmnopqrstuvwxyz"
+	UPPER_CASE_CHARSET = strings.ToUpper(LOWER_CASE_CHARSET)
+)
+
+// GetWD is just wrapper on os.Getwd w\out error
+func GetWD() string {
+	wd, _ := os.Getwd()
+	return wd
+}
 
 // RndStr return random string from charset with certain length
 // 	charset = "abcdef01234ABCDEF"
@@ -26,11 +42,21 @@ func RndStr(charset string, length int) string {
 // CreateLogger create log.Logger in /logs/logDir/logName_time.log
 // 	logDir = where to place logs
 // 	logName = logs prefix name
-// 	logPrefix = logs prefix
-func CreateLogger(logDir, logName, logPrefix string) *log.Logger {
-	wd, _ := os.Getwd()
-	logFile, _ := os.OpenFile(wd+"/logs/"+logDir+"/"+logName+"_"+time.Now().Format("2006-01-02")+".log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-	return log.New(logFile, logPrefix, log.Ldate|log.Ltime|log.Lshortfile)
+func CreateLogger(logDir, logName string) (*logrus.Logger, error) {
+	wd := GetWD()
+
+	if e := os.MkdirAll(wd+"/logs/"+logDir, os.ModePerm); e != nil {
+		return nil, fmt.Errorf("create log error: %v", e.Error())
+	}
+
+	logFile, e := os.OpenFile(wd+"/logs/"+logDir+"/"+logName+"_"+time.Now().Format("2006-01-02")+".log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	if e != nil {
+		return nil, e
+	}
+
+	log := logrus.New()
+	log.Out = logFile
+	return log, nil
 }
 
 // RemoveExpiredFiles remove files in src folder which before d days before

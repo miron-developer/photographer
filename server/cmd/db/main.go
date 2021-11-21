@@ -2,54 +2,73 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net"
+	"os"
+	"os/signal"
 
-	"photographer/internal/app"
-	"photographer/internal/db"
-	pdb "photographer/internal/protobuf/db"
+	"photographer/cmd/db/internal"
+
+	"photographer/internal/protobuf/db"
 
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
-type dbServer struct {
-	pdb.UnimplementedDBServer
+type DBServiceGRPC struct {
+	db.UnimplementedDBServer
 }
 
-func newDbServer() *dbServer {
-	return &dbServer{}
+func newDbServer() *DBServiceGRPC {
+	return &DBServiceGRPC{}
 }
 
-func (s *dbServer) Create(ctx context.Context, p *pdb.SQLInsertParams) (*pdb.SQLResult, error) {
-	return &pdb.SQLResult{}, nil
+func (s *DBServiceGRPC) Create(ctx context.Context, p *db.SQLInsertParams) (*db.SQLResult, error) {
+	// model, ok := internal.DefineModel(p.Table)
+	// if !ok {
+	// 	return nil, errors.New("wrong table")
+	// }
+
+	return &db.SQLResult{Result: db.SQLResult_CREATE, Data: []*anypb.Any{}}, nil
 }
 
-func (s *dbServer) Update(ctx context.Context, p *pdb.SQLUpdateParams) (*pdb.SQLResult, error) {
-	return &pdb.SQLResult{}, nil
+func (s *DBServiceGRPC) Update(ctx context.Context, p *db.SQLUpdateParams) (*db.SQLResult, error) {
+	return &db.SQLResult{}, nil
 }
 
-func (s *dbServer) Delete(ctx context.Context, p *pdb.SQLDeleteParams) (*pdb.SQLResult, error) {
-	return &pdb.SQLResult{}, nil
+func (s *DBServiceGRPC) Delete(ctx context.Context, p *db.SQLDeleteParams) (*db.SQLResult, error) {
+	return &db.SQLResult{}, nil
 }
 
-func (s *dbServer) Select(ctx context.Context, p *pdb.SQLSelectParams) (*pdb.SQLResult, error) {
-	return &pdb.SQLResult{}, nil
+func (s *DBServiceGRPC) Select(ctx context.Context, p *db.SQLSelectParams) (*db.SQLResult, error) {
+	return &db.SQLResult{}, nil
 }
 
 func main() {
 	// initialize
-	log := app.CreateLogger("db", "", "")
-	if e := db.InitDB(log); e != nil {
-		log.Fatalln("init db error: ", e)
-	}
+	dbCtx := internal.Init()
+	defer dbCtx.Log.Writer().Close()
 
-	// listen db service
-	lis, e := net.Listen("tcp", fmt.Sprintf("localhost:%d", app.DBPort))
+	// listen db service place
+	lis, e := net.Listen("tcp", dbCtx.Config.S_DB_ADDR)
 	if e != nil {
-		log.Fatalf("failed to listen: %v\n", e)
+		dbCtx.Log.Fatalf("failed to listen: %v\n", e)
 	}
 
-	srv := grpc.NewServer(nil)
-	pdb.RegisterDBServer(srv, newDbServer())
-	srv.Serve(lis)
+	// create grpc server and listen on above place
+	srv := grpc.NewServer()
+	db.RegisterDBServer(srv, newDbServer())
+	go func() {
+		if e := srv.Serve(lis); e != nil {
+			dbCtx.Log.Fatal("listen grpc service error: ", e)
+		}
+	}()
+
+	// Setting up signal capturing
+	var stop = make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+	// Waiting for SIGINT (pkill -2)
+	<-stop
+
+	// after stop signal actions here
+
 }

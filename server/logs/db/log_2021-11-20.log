@@ -1,0 +1,18 @@
+time="2021-11-20T21:45:18+06:00" level=info msg="getting config..."
+time="2021-11-20T21:45:18+06:00" level=info msg="done!"
+time="2021-11-20T21:45:18+06:00" level=info msg="accessing database..."
+time="2021-11-20T21:45:18+06:00" level=info msg="done!"
+time="2021-11-20T21:45:18+06:00" level=info msg=migrations...
+time="2021-11-20T21:45:18+06:00" level=info msg="done!"
+time="2021-11-20T21:46:41+06:00" level=info msg="getting config..."
+time="2021-11-20T21:46:41+06:00" level=info msg="done!"
+time="2021-11-20T21:46:41+06:00" level=info msg="accessing database..."
+time="2021-11-20T21:46:41+06:00" level=info msg="done!"
+time="2021-11-20T21:46:41+06:00" level=info msg=migrations...
+time="2021-11-20T21:46:42+06:00" level=info msg="done!"
+time="2021-11-20T21:48:07+06:00" level=info msg="getting config..."
+time="2021-11-20T21:48:07+06:00" level=info msg="done!"
+time="2021-11-20T21:48:07+06:00" level=info msg="accessing database..."
+time="2021-11-20T21:48:07+06:00" level=info msg="done!"
+time="2021-11-20T21:48:07+06:00" level=info msg=migrations...
+time="2021-11-20T21:48:07+06:00" level=info msg="done!"

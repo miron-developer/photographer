@@ -3,10 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
-	"os"
-	"strconv"
-
-	"photographer/internal/orm"
+	// "photographer/internal/orm"
 )
 
 func Images(w http.ResponseWriter, r *http.Request) (interface{}, error) {
@@ -14,19 +11,19 @@ func Images(w http.ResponseWriter, r *http.Request) (interface{}, error) {
 		return nil, errors.New("wrong method")
 	}
 
-	ID, e := strconv.Atoi(r.FormValue("id"))
-	if e != nil {
-		return nil, errors.New("не корректный id")
-	}
+	// ID, e := strconv.Atoi(r.FormValue("id"))
+	// if e != nil {
+	// 	return nil, errors.New("не корректный id")
+	// }
 
-	mainQ := orm.SQLSelectParams{
-		Table:   "Images AS i",
-		What:    "i.*",
-		Options: orm.DoSQLOption("i.parselID=?", "", "", ID),
-	}
-	if datas := orm.GeneralGet(mainQ, nil, orm.Photo{}); datas != nil {
-		return datas, nil
-	}
+	// mainQ := orm.SQLSelectParams{
+	// 	Table:   "Images AS i",
+	// 	What:    "i.*",
+	// 	Options: orm.DoSQLOption("i.parselID=?", "", "", ID),
+	// }
+	// if datas := orm.GeneralGet(mainQ, nil, orm.Photo{}); datas != nil {
+	// 	return datas, nil
+	// }
 	return nil, errors.New("н/д")
 }
 
@@ -54,20 +51,21 @@ func CreateImage(w http.ResponseWriter, r *http.Request) (interface{}, error) {
 // RemoveImage remove one image
 func RemoveImage(w http.ResponseWriter, r *http.Request) (interface{}, error) {
 	// get general ids
-	userID := GetUserIDfromReq(w, r)
-	if userID == -1 {
-		return nil, errors.New("не зарегистрированы в сети")
-	}
-	imgID, e := strconv.Atoi(r.PostFormValue("id"))
-	if e != nil {
-		return nil, errors.New("не корректный id  фото")
-	}
+	// userID := GetUserIDfromReq(w, r)
+	// if userID == -1 {
+	// 	return nil, errors.New("не зарегистрированы в сети")
+	// }
+	// imgID, e := strconv.Atoi(r.PostFormValue("id"))
+	// if e != nil {
+	// 	return nil, errors.New("не корректный id  фото")
+	// }
 
-	wd, _ := os.Getwd()
-	os.Remove(wd + r.PostFormValue("src"))
+	// wd, _ := os.Getwd()
+	// os.Remove(wd + r.PostFormValue("src"))
 
-	return nil, orm.DeleteByParams(orm.SQLDeleteParams{
-		Table:   "Images",
-		Options: orm.DoSQLOption("id=? AND userID=?", "", "", imgID, userID),
-	})
+	// return nil, orm.DeleteByParams(orm.SQLDeleteParams{
+	// 	Table:   "Images",
+	// 	Options: orm.DoSQLOption("id=? AND userID=?", "", "", imgID, userID),
+	// })
+	return nil, nil
 }

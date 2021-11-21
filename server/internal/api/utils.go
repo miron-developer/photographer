@@ -8,8 +8,7 @@ import (
 	"regexp"
 	"strconv"
 	"time"
-
-	"photographer/internal/orm"
+	// "photographer/internal/orm"
 )
 
 type API_RESPONSE struct {
@@ -100,11 +99,11 @@ func GetUserIDfromReq(w http.ResponseWriter, r *http.Request) int {
 		return -1
 	}
 
-	userID, e := orm.GetOneFrom(orm.SQLSelectParams{
-		Table:   "Sessions",
-		What:    "userID",
-		Options: orm.DoSQLOption("id = ?", "", "", sesID),
-	})
+	// userID, e := orm.GetOneFrom(orm.SQLSelectParams{
+	// 	Table:   "Sessions",
+	// 	What:    "userID",
+	// 	Options: orm.DoSQLOption("id = ?", "", "", sesID),
+	// })
 	if e != nil {
 		return -1
 	}
@@ -113,7 +112,8 @@ func GetUserIDfromReq(w http.ResponseWriter, r *http.Request) int {
 	// ses := &orm.Session{ID: sesID, Expire: TimeExpire(sessionExpire)}
 	// ses.Change()
 	SetCookie(w, sesID, int(sessionExpire/timeSecond))
-	return orm.FromINT64ToINT(userID[0])
+	// return orm.FromINT64ToINT(userID[0])
+	return -1
 }
 
 // GetUserID get userID from rq or from get rq

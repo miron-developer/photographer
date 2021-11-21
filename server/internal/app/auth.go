@@ -5,9 +5,7 @@ import (
 	"net/http"
 
 	"photographer/internal/api"
-	"photographer/internal/orm"
-
-	"golang.org/x/crypto/bcrypt"
+	// "photographer/internal/orm"
 )
 
 // SignUp check validate, start session
@@ -41,27 +39,27 @@ func (app *Application) SignUp(w http.ResponseWriter, r *http.Request) (map[stri
 		}
 	}
 
-	hashPass, e := bcrypt.GenerateFromPassword([]byte(pass), 4)
-	if e != nil {
-		return nil, errors.New("ошибка сервера: пароль")
-	}
+	// hashPass, e := bcrypt.GenerateFromPassword([]byte(pass), 4)
+	// if e != nil {
+	// 	return nil, errors.New("ошибка сервера: пароль")
+	// }
 
-	user := &orm.Customer{
-		FirstName: nickname, Password: string(hashPass),
-	}
-	userID, e := user.Create()
-	if e != nil {
-		return nil, errors.New("ошибка сервера: не удалось создать пользователя")
-	}
+	// user := &orm.Customer{
+	// 	FirstName: nickname, Password: string(hashPass),
+	// }
+	// userID, e := user.Create()
+	// if e != nil {
+	// 	return nil, errors.New("ошибка сервера: не удалось создать пользователя")
+	// }
 
 	// start session
-	if e := api.SessionStart(w, r, userID); e != nil {
-		return nil, e
-	}
+	// if e := api.SessionStart(w, r, userID); e != nil {
+	// 	return nil, e
+	// }
 
 	// send SMS with temp_password & login
 	// or mb make notify on front
-	return map[string]interface{}{"login": validPhone.Value.(string), "password": pass}, e
+	return map[string]interface{}{"login": validPhone.Value.(string), "password": pass}, nil
 }
 
 // SignIn check password and login from db and request + oauth2
@@ -77,18 +75,19 @@ func (app *Application) SignIn(w http.ResponseWriter, r *http.Request) (int, err
 		return -1, e
 	}
 
-	res, e := orm.GetOneFrom(orm.SQLSelectParams{
-		What:    "id",
-		Table:   "Users",
-		Options: orm.DoSQLOption("email = ?", "", "", login),
-		Joins:   nil,
-	})
-	if e != nil {
-		return -1, errors.New("неправильный логин")
-	}
+	// res, e := orm.GetOneFrom(orm.SQLSelectParams{
+	// 	What:    "id",
+	// 	Table:   "Users",
+	// 	Options: orm.DoSQLOption("email = ?", "", "", login),
+	// 	Joins:   nil,
+	// })
+	// if e != nil {
+	// 	return -1, errors.New("неправильный логин")
+	// }
 
-	ID := orm.FromINT64ToINT(res[0])
-	return ID, api.SessionStart(w, r, ID)
+	// ID := orm.FromINT64ToINT(res[0])
+	// return ID, api.SessionStart(w, r, ID)
+	return -1, nil
 }
 
 // Logout user
@@ -98,12 +97,12 @@ func (app *Application) Logout(w http.ResponseWriter, r *http.Request) error {
 		return errors.New("не зарегистрированы в сети")
 	}
 
-	if e := orm.DeleteByParams(orm.SQLDeleteParams{
-		Table:   "Sessions",
-		Options: orm.DoSQLOption("userID = ?", "", "", id),
-	}); e != nil {
-		return errors.New("не произведен выход")
-	}
+	// if e := orm.DeleteByParams(orm.SQLDeleteParams{
+	// 	Table:   "Sessions",
+	// 	Options: orm.DoSQLOption("userID = ?", "", "", id),
+	// }); e != nil {
+	// 	return errors.New("не произведен выход")
+	// }
 
 	api.SetCookie(w, "", -1)
 	return nil
@@ -111,30 +110,31 @@ func (app *Application) Logout(w http.ResponseWriter, r *http.Request) error {
 
 // ResetPassword send on email message code to reset password
 func (app *Application) ResetPassword(w http.ResponseWriter, r *http.Request) error {
-	phone, ok := app.UsersCode[r.PostFormValue("code")]
-	if !ok {
-		return errors.New("не корректный код")
-	}
+	// phone, ok := app.UsersCode[r.PostFormValue("code")]
+	// if !ok {
+	// 	return errors.New("не корректный код")
+	// }
 
 	newPass := r.PostFormValue("password")
 	if e := api.CheckPassword(false, newPass, ""); e != nil {
 		return e
 	}
 
-	res, e := orm.GetOneFrom(orm.SQLSelectParams{
-		What:    "id",
-		Table:   "Users",
-		Options: orm.DoSQLOption("phoneNumber = ?", "", "", phone.Value),
-	})
-	if e != nil {
-		return errors.New("не корректный телефон")
-	}
+	// res, e := orm.GetOneFrom(orm.SQLSelectParams{
+	// 	What:    "id",
+	// 	Table:   "Users",
+	// 	Options: orm.DoSQLOption("phoneNumber = ?", "", "", phone.Value),
+	// })
+	// if e != nil {
+	// 	return errors.New("не корректный телефон")
+	// }
 
-	password, e := bcrypt.GenerateFromPassword([]byte(newPass), 4)
-	if e != nil {
-		return errors.New("ошибка сервера: новый пароль не создан")
-	}
+	// password, e := bcrypt.GenerateFromPassword([]byte(newPass), 4)
+	// if e != nil {
+	// 	return errors.New("ошибка сервера: новый пароль не создан")
+	// }
 
-	user := &orm.Customer{ID: res[0].(uint), Password: string(password)}
-	return user.Change()
+	// user := &orm.Customer{ID: res[0].(uint), Password: string(password)}
+	// return user.Change()
+	return nil
 }
